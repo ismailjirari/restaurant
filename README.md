@@ -1,6 +1,6 @@
 # Gourmet Haven - Restaurant Management System
 
-![App Screenshot](/static/images/logon.svg)
+![App Screenshot](/static/images/logo.svg)
 
 A complete restaurant management system with online reservations, menu ordering, and admin dashboard.
 
