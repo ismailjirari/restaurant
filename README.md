@@ -1,6 +1,6 @@
 # Gourmet Haven - Restaurant Management System
 
-![App Screenshot](/static/images/screenshot.png)
+![App Screenshot](/static/images/logon.svg)
 
 A complete restaurant management system with online reservations, menu ordering, and admin dashboard.
 
@@ -41,15 +41,4 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Project Structure :
-restaurant.
-├── instance/          # Database files
-├── static/            # CSS, JS, images
-├── templates/         # HTML templates
-├── website/           # Flask application
-│   ├── __init__.py
-│   ├── auth.py        # Authentication routes
-│   ├── models.py      # Database models
-│   └── views.py       # Main routes
-└── main.py            # Entry point
 
