@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - Reservations{% endblock %}
+
+{% block content %}
+<section class="reservation-hero" style="background-image: url('{{ url_for('static', filename='images/special-dish-banner.jpg') }}')">
+    <div class="hero-content">
+        <h1>Make a Reservation</h1>
+        <p>Book your table for an unforgettable dining experience</p>
+    </div>
+</section>
+
+<section class="reservation-form-section">
+    <div class="form-container">
+        <h2>Reservation Details</h2>
+        <form method="POST">
+            <!-- Remove the explicit csrf_token line -->
+            <!-- The form will still be protected if CSRF is properly configured in Flask -->
+            
+            <div class="form-group">
+                <label for="customer_name">Full Name *</label>
+                <input type="text" id="customer_name" name="customer_name" 
+                       value="{% if current_user.is_authenticated %}{{ current_user.first_name }} {{ current_user.last_name }}{% endif %}" 
+                       required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" 
+                           value="{% if current_user.is_authenticated %}{{ current_user.email }}{% endif %}" 
+                           required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone_number">Phone Number *</label>
+                    <input type="tel" id="phone_number" name="phone_number" 
+                           value="{% if current_user.is_authenticated %}{{ current_user.phone }}{% endif %}" 
+                           required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="reservation_date">Date *</label>
+                    <input type="date" id="reservation_date" name="reservation_date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reservation_time">Time *</label>
+                    <input type="time" id="reservation_time" name="reservation_time" min="11:00" max="22:00" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="party_size">Party Size *</label>
+                    <select id="party_size" name="party_size" required>
+                        <option value="1">1 person</option>
+                        <option value="2" selected>2 people</option>
+                        <option value="3">3 people</option>
+                        <option value="4">4 people</option>
+                        <option value="5">5 people</option>
+                        <option value="6">6 people</option>
+                        <option value="7">7 people</option>
+                        <option value="8">8 people</option>
+                        <option value="9">9+ people</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="table_number">Table Preference (Optional)</label>
+                    <select id="table_number" name="table_number">
+                        <option value="">No preference</option>
+                        <option value="1">Table 1 (Window)</option>
+                        <option value="2">Table 2 (Window)</option>
+                        <option value="3">Table 3 (Private)</option>
+                        <option value="4">Table 4 (Private)</option>
+                        <option value="5">Table 5 (Garden View)</option>
+                        <option value="6">Table 6 (Garden View)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="special_requests">Special Requests (Optional)</label>
+                <textarea id="special_requests" name="special_requests" 
+                          placeholder="Allergies, dietary restrictions, special occasions, etc."></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">Book Table</button>
+        </form>
+    </div>
+    
+    <div class="reservation-info">
+        <h3>Reservation Policy</h3>
+        <ul>
+            <li>Reservations are held for 15 minutes past the booked time</li>
+            <li>Groups of 6+ must give 24 hours notice for cancellation</li>
+            <li>Special requests are subject to availability</li>
+        </ul>
+        
+        <div class="contact-info">
+            <h3>Need Help?</h3>
+            <p><i class="fas fa-phone"></i> (+212) 760-058308</p>
+            <p><i class="fas fa-envelope"></i>  ismailjirari5@gmail.com</p>
+        </div>
+    </div>
+</section>
+
+<section class="why-reserve">
+    <h2>Why Reserve With Us?</h2>
+    <div class="benefits">
+        <div class="benefit">
+            <img src="{{ url_for('static', filename='images/badge-1.png') }}" alt="Guaranteed Table">
+            <h3>Guaranteed Table</h3>
+            <p>No waiting during peak hours</p>
+        </div>
+        <div class="benefit">
+            <img src="{{ url_for('static', filename='images/badge-2.png') }}" alt="Special Offers">
+            <h3>Special Offers</h3>
+            <p>Exclusive deals for reserved guests</p>
+        </div>
+        <div class="benefit">
+            <img src="{{ url_for('static', filename='images/hero-icon.png') }}" alt="Priority Service">
+            <h3>Priority Service</h3>
+            <p>Dedicated attention from our staff</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set minimum date to today
+        const today = new Date();
+        const todayFormatted = today.toISOString().split('T')[0];
+        document.getElementById('reservation_date').min = todayFormatted;
+        
+        // Set default time to next available slot
+        const now = new Date();
+        const currentHour = now.getHours();
+        let defaultHour = 19; // 7 PM
+        
+        if (currentHour < 11) {
+            defaultHour = 11;
+        } else if (currentHour < 22) {
+            defaultHour = currentHour + 1;
+        }
+        
+        document.getElementById('reservation_time').value = `${String(defaultHour).padStart(2, '0')}:00`;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - Login{% endblock %}
+
+{% block content %}
+<section class="auth-section" style="background-image: url('{{ url_for('static', filename='images/service-1.jpg') }}')">
+    <div class="auth-container">
+        <div class="auth-form">
+            <div class="form-header">
+                <img src="{{ url_for('static', filename='images/logon.svg') }}" alt="Gourmet Haven">
+                <h2>Welcome Back</h2>
+                <p>Login to your account</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <!-- CSRF protection will be handled automatically by Flask-WTF -->
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                    <i class="fas fa-envelope"></i>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                    <i class="fas fa-lock"></i>
+                </div>
+                
+                <div class="form-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+                
+                <button type="submit" class="auth-btn">Login</button>
+                
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="{{ url_for('auth.sign_up') }}">Sign up</a></p>
+                </div>
+            </form>
+        </div>
+        
+        <div class="auth-image">
+            <img src="{{ url_for('static', filename='images/service-2.jpg') }}" alt="Restaurant Interior">
+        </div>
+    </div>
+</section>
+{% endblock %}

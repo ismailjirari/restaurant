@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - Order Confirmation{% endblock %}
+
+{% block content %}
+<section class="confirmation-header">
+    <div class="header-content">
+        {% if order.status == 'cancelled' %}
+            <i class="fas fa-times-circle cancelled-icon"></i>
+            <h1>Order Cancelled</h1>
+            <p>Order #{{ order.id }} has been cancelled</p>
+        {% else %}
+            <i class="fas fa-check-circle success-icon"></i>
+            <h1>Order Confirmed</h1>
+            <p>Thank you for your order! Here are the details</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="order-details">
+    <div class="details-container">
+        <div class="order-summary">
+            <h2>Order Summary</h2>
+            
+            <div class="summary-row">
+                <span>Order Number:</span>
+                <span>#{{ order.id }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Order Date:</span>
+                <span>{{ order.order_date.strftime('%B %d, %Y at %I:%M %p') }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Status:</span>
+                <span class="status-badge {{ order.status }}">{{ order.status|title }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Total Amount:</span>
+                <span>${{ "%.2f"|format(order.total_amount) }}</span>
+            </div>
+            
+            {% if order.special_requests %}
+            <div class="special-requests">
+                <h3>Special Requests</h3>
+                <p>{{ order.special_requests }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="order-items">
+            <h2>Your Items</h2>
+            
+            {% for item in order.items %}
+            <div class="item-card">
+                <img src="{{ url_for('static', filename='images/' + item.menu_item.image_path if item.menu_item.image_path else 'menu-' + loop.index|string + '.png') }}" 
+                     alt="{{ item.menu_item.name }}">
+                
+                <div class="item-info">
+                    <h3>{{ item.menu_item.name }}</h3>
+                    <p>{{ item.menu_item.description }}</p>
+                    
+                    <div class="item-meta">
+                        <span class="price">${{ "%.2f"|format(item.menu_item.price) }}</span>
+                        <span class="quantity">× {{ item.quantity }}</span>
+                        <span class="total">${{ "%.2f"|format(item.menu_item.price * item.quantity) }}</span>
+                    </div>
+                    
+                    {% if item.special_requests %}
+                    <div class="item-notes">
+                        <strong>Note:</strong> {{ item.special_requests }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="order-actions">
+        {% if order.status in ['pending', 'preparing'] %}
+            <button class="cancel-btn" data-id="{{ order.id }}">Cancel Order</button>
+        {% endif %}
+        <a href="{{ url_for('views.menu') }}" class="menu-btn">Back to Menu</a>
+        <a href="{{ url_for('views.my_orders') }}" class="orders-btn">View All Orders</a>
+    </div>
+</section>
+
+{% if order.status == 'pending' %}
+<section class="order-timeline">
+    <h2>Order Status</h2>
+    
+    <div class="timeline">
+        <div class="timeline-step {% if order.status != 'pending' %}completed{% endif %}">
+            <div class="step-icon">
+                <i class="fas fa-utensils"></i>
+            </div>
+            <div class="step-label">
+                <h3>Order Received</h3>
+                <p>We've received your order</p>
+            </div>
+        </div>
+        
+        <div class="timeline-step {% if order.status in ['preparing', 'ready', 'delivered'] %}completed{% endif %}">
+            <div class="step-icon">
+                <i class="fas fa-blender"></i>
+            </div>
+            <div class="step-label">
+                <h3>Preparing</h3>
+                <p>Chef is working on your order</p>
+            </div>
+        </div>
+        
+        <div class="timeline-step {% if order.status in ['ready', 'delivered'] %}completed{% endif %}">
+            <div class="step-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="step-label">
+                <h3>Ready</h3>
+                <p>Your order is ready for pickup/delivery</p>
+            </div>
+        </div>
+        
+        <div class="timeline-step {% if order.status == 'delivered' %}completed{% endif %}">
+            <div class="step-icon">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div class="step-label">
+                <h3>Delivered</h3>
+                <p>Enjoy your meal!</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cancel order button
+        const cancelBtn = document.querySelector('.cancel-btn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to cancel this order?')) {
+                    fetch(`/cancel-order/${orderId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Order cancelled');
+                            // Reload to show updated status
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showToast('Error cancelling order', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showToast('Error cancelling order', 'error');
+                    });
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

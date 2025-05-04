@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - Home{% endblock %}
+
+{% block content %}
+<section class="hero-slider">
+    <div class="slider-container">
+        <div class="slide active" style="background-image: url('{{ url_for('static', filename='images/hero-slider-1.jpg') }}')">
+            <div class="slide-content">
+                <h1>Exquisite Dining Experience</h1>
+                <p>Discover our seasonal menu featuring the finest ingredients</p>
+                <a href="{{ url_for('views.menu') }}" class="btn">View Menu</a>
+            </div>
+        </div>
+        <div class="slide" style="background-image: url('{{ url_for('static', filename='images/hero-slider-2.jpg') }}')">
+            <div class="slide-content">
+                <h1>Perfect for Special Occasions</h1>
+                <p>Book your table for an unforgettable experience</p>
+                <a href="{{ url_for('views.reservations') }}" class="btn">Reserve Now</a>
+            </div>
+        </div>
+        <div class="slide" style="background-image: url('{{ url_for('static', filename='images/hero-slider-3.jpg') }}')">
+            <div class="slide-content">
+                <h1>Artisanal Cuisine</h1>
+                <p>Crafted with passion by our master chefs</p>
+                <a href="#specials" class="btn">Today's Specials</a>
+            </div>
+        </div>
+    </div>
+    <div class="slider-nav">
+        <button class="prev-slide"><i class="fas fa-chevron-left"></i></button>
+        <div class="dots"></div>
+        <button class="next-slide"><i class="fas fa-chevron-right"></i></button>
+    </div>
+</section>
+
+<section class="features">
+    <div class="feature">
+        <img src="{{ url_for('static', filename='images/features-icon-1.png') }}" alt="Fresh Ingredients">
+        <h3>Fresh Ingredients</h3>
+        <p>Locally sourced, organic produce for maximum flavor</p>
+    </div>
+    <div class="feature">
+        <img src="{{ url_for('static', filename='images/features-icon-2.png') }}" alt="Expert Chefs">
+        <h3>Expert Chefs</h3>
+        <p>Master chefs with decades of culinary experience</p>
+    </div>
+    <div class="feature">
+        <img src="{{ url_for('static', filename='images/features-icon-3.png') }}" alt="Fine Dining">
+        <h3>Fine Dining</h3>
+        <p>Elegant atmosphere for special occasions</p>
+    </div>
+</section>
+
+<section id="specials" class="special-dishes">
+    <h2 class="section-title">Today's Specials</h2>
+    <div class="dishes-container">
+        {% for item in menu_items[:3] %}
+        <div class="dish-card">
+            <img src="{{ url_for('static', filename='images/' + item.image_path if item.image_path else 'menu-1.png') }}" alt="{{ item.name }}">
+            <div class="dish-info">
+                <h3>{{ item.name }}</h3>
+                <p>{{ item.description }}</p>
+                <div class="dish-footer">
+                    <span class="price">${{ "%.2f"|format(item.price) }}</span>
+                    <button class="add-to-cart" data-id="{{ item.id }}">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="about-section" style="background-image: url('{{ url_for('static', filename='images/about-banner.jpg') }}')">
+    <div class="about-content">
+        <div class="about-text" style="margin-left: 30px; padding-left: 20px;">
+            <h2>Our Story</h2>
+            <p>Founded in 2005, Gourmet Haven has been serving exquisite dishes crafted with passion and the finest ingredients. Our chef brings 25 years of international experience to create a menu that blends traditional techniques with modern innovation.</p>
+            <a href="{{ url_for('views.reservations') }}" class="btn">Book a Table</a>
+        </div>
+        <div class="about-image">
+            <img src="{{ url_for('static', filename='images/about-abs-image.jpg') }}" alt="Our Restaurant">
+        </div>
+    </div>
+</section>
+
+<section class="testimonials" style="background-image: url('{{ url_for('static', filename='images/testimonial-bg.jpg') }}')">
+    <h2 class="section-title">What Our Guests Say</h2>
+    <div class="testimonial-slider">
+        <div class="testimonial active">
+            <img src="{{ url_for('static', filename='images/testi-avatar.jpg') }}" alt="Customer">
+            <p>"The best dining experience I've had in years. The attention to detail is remarkable!"</p>
+            <h4>Michael Chen</h4>
+            <div class="rating">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+            </div>
+        </div>
+        <div class="testimonial">
+            <img src="{{ url_for('static', filename='images/testi-avatar.jpg') }}" alt="Customer">
+            <p>"Every dish was a masterpiece. The wine pairing recommendation was perfect."</p>
+            <h4>Michael Chen</h4>
+            <div class="rating">
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+                <i class="fas fa-star"></i>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize hero slider
+        const heroSlider = new Slider('.slider-container', {
+            autoPlay: true,
+            interval: 5000
+        });
+        
+        // Initialize testimonial slider
+        const testimonialSlider = new Slider('.testimonial-slider', {
+            autoPlay: true,
+            interval: 7000
+        });
+        
+        // Add to cart functionality for special dishes
+        document.querySelectorAll('.add-to-cart').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-id');
+                addToCart(itemId, 1);
+                showToast('Item added to cart!');
+            });
+        });
+    });
+</script>
+{% endblock %}

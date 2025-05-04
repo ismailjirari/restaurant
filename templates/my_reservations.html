@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - My Reservations{% endblock %}
+
+{% block content %}
+<section class="reservations-header">
+    <h1>My Reservations</h1>
+    <p>View and manage your upcoming bookings</p>
+</section>
+
+<section class="reservations-list">
+    {% if reservations %}
+        <div class="reservation-filters">
+            <button class="filter-btn active" data-status="all">All</button>
+            <button class="filter-btn" data-status="pending">Pending</button>
+            <button class="filter-btn" data-status="confirmed">Confirmed</button>
+            <button class="filter-btn" data-status="cancelled">Cancelled</button>
+        </div>
+        
+        <div class="reservations-container">
+            {% for reservation in reservations %}
+            <div class="reservation-card" data-status="{{ reservation.status }}">
+                <div class="reservation-header">
+                    <h3>Reservation #{{ reservation.id }}</h3>
+                    <span class="status-badge {{ reservation.status }}">{{ reservation.status|title }}</span>
+                </div>
+                
+                <div class="reservation-details">
+                    <div class="detail">
+                        <span class="label">Date:</span>
+                        <span class="value">{{ reservation.reservation_date.strftime('%B %d, %Y') }}</span>
+                    </div>
+                    <div class="detail">
+                        <span class="label">Time:</span>
+                        <span class="value">{{ reservation.reservation_time.strftime('%I:%M %p') }}</span>
+                    </div>
+                    <div class="detail">
+                        <span class="label">Party Size:</span>
+                        <span class="value">{{ reservation.party_size }} person{{ 's' if reservation.party_size > 1 else '' }}</span>
+                    </div>
+                    {% if reservation.table_number %}
+                    <div class="detail">
+                        <span class="label">Table:</span>
+                        <span class="value">{{ reservation.table_number }}</span>
+                    </div>
+                    {% endif %}
+                    {% if reservation.special_requests %}
+                    <div class="detail">
+                        <span class="label">Special Requests:</span>
+                        <span class="value">{{ reservation.special_requests }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="reservation-actions">
+                    {% if reservation.status in ['pending', 'confirmed'] %}
+                        <button class="cancel-btn" data-id="{{ reservation.id }}">Cancel</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-reservations">
+            <img src="{{ url_for('static', filename='images/hero-icon.png') }}" alt="No reservations">
+            <h3>No Reservations Found</h3>
+            <p>You haven't made any reservations yet.</p>
+            <a href="{{ url_for('views.reservations') }}" class="btn">Make a Reservation</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter reservations by status
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const status = this.getAttribute('data-status');
+                const reservations = document.querySelectorAll('.reservation-card');
+                
+                reservations.forEach(reservation => {
+                    if (status === 'all' || reservation.getAttribute('data-status') === status) {
+                        reservation.style.display = 'block';
+                    } else {
+                        reservation.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Cancel reservation buttons
+        document.querySelectorAll('.cancel-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const reservationId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to cancel this reservation?')) {
+                    fetch(`/cancel-reservation/${reservationId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Reservation cancelled');
+                            // Reload or update UI
+                            location.reload();
+                        } else {
+                            showToast('Error cancelling reservation', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showToast('Error cancelling reservation', 'error');
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

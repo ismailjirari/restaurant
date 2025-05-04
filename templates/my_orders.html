@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - My Orders{% endblock %}
+
+{% block content %}
+<section class="orders-header">
+    <h1>My Orders</h1>
+    <p>View your order history and track current orders</p>
+</section>
+
+<section class="orders-list">
+    {% if orders %}
+        <div class="order-filters">
+            <button class="filter-btn active" data-status="all">All</button>
+            <button class="filter-btn" data-status="pending">Pending</button>
+            <button class="filter-btn" data-status="preparing">Preparing</button>
+            <button class="filter-btn" data-status="ready">Ready</button>
+            <button class="filter-btn" data-status="delivered">Delivered</button>
+            <button class="filter-btn" data-status="cancelled">Cancelled</button>
+        </div>
+        
+        <div class="orders-container">
+            {% for order in orders %}
+            <div class="order-card" data-status="{{ order.status }}">
+                <div class="order-header">
+                    <div>
+                        <h3>Order #{{ order.id }}</h3>
+                        <p class="order-date">{{ order.order_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    <span class="status-badge {{ order.status }}">{{ order.status|title }}</span>
+                </div>
+                
+                <div class="order-items">
+                    {% for item in order.items %}
+                    <div class="order-item">
+                        <div class="item-info">
+                            <h4>{{ item.menu_item.name }}</h4>
+                            <p>Quantity: {{ item.quantity }}</p>
+                            {% if item.special_requests %}
+                            <p class="special-requests">Note: {{ item.special_requests }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="item-price">
+                            ${{ "%.2f"|format(item.menu_item.price * item.quantity) }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-footer">
+                    <div class="order-total">
+                        <span>Total:</span>
+                        <span>${{ "%.2f"|format(order.total_amount) }}</span>
+                    </div>
+                    
+                    <div class="order-actions">
+                        {% if order.status in ['pending', 'preparing'] %}
+                            <button class="cancel-order-btn" data-id="{{ order.id }}">Cancel Order</button>
+                        {% endif %}
+                        <a href="{{ url_for('views.order_confirmation', order_id=order.id) }}" class="view-details-btn">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="no-orders">
+            <img src="{{ url_for('static', filename='images/menu-1.png') }}" alt="No orders">
+            <h3>No Orders Found</h3>
+            <p>You haven't placed any orders yet.</p>
+            <a href="{{ url_for('views.menu') }}" class="btn">View Menu</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter orders by status
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const status = this.getAttribute('data-status');
+                const orders = document.querySelectorAll('.order-card');
+                
+                orders.forEach(order => {
+                    if (status === 'all' || order.getAttribute('data-status') === status) {
+                        order.style.display = 'block';
+                    } else {
+                        order.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Cancel order buttons
+        document.querySelectorAll('.cancel-order-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to cancel this order?')) {
+                    fetch(`/cancel-order/${orderId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showToast('Order cancelled');
+                            // Reload or update UI
+                            location.reload();
+                        } else {
+                            showToast('Error cancelling order', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        showToast('Error cancelling order', 'error');
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

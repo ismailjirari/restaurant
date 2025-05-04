@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - Admin Reservations{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <h1>Reservation Management</h1>
+    <p>View and manage all reservations</p>
+</section>
+
+<section class="admin-reservations">
+    <div class="admin-filters">
+        <div class="date-filter">
+            <label for="filter-date">Filter by Date:</label>
+            <input type="date" id="filter-date">
+            <button id="reset-date">Reset</button>
+        </div>
+        
+        <div class="status-filter">
+            <label>Filter by Status:</label>
+            <select id="filter-status">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        
+        <div class="search-filter">
+            <input type="text" id="search-reservations" placeholder="Search by name or phone...">
+            <button><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+    
+    <div class="reservations-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Date & Time</th>
+                    <th>Party Size</th>
+                    <th>Table</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in reservations %}
+                <tr data-status="{{ reservation.status }}">
+                    <td>{{ reservation.id }}</td>
+                    <td>
+                        <div class="customer-info">
+                            <strong>{{ reservation.customer_name }}</strong>
+                            <span>{{ reservation.phone_number }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {{ reservation.reservation_date.strftime('%b %d, %Y') }}<br>
+                        {{ reservation.reservation_time.strftime('%I:%M %p') }}
+                    </td>
+                    <td>{{ reservation.party_size }}</td>
+                    <td>{{ reservation.table_number if reservation.table_number else '-' }}</td>
+                    <td>
+                        <span class="status-badge {{ reservation.status }}">{{ reservation.status|title }}</span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <select class="status-select" data-id="{{ reservation.id }}">
+                                <option value="pending" {% if reservation.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="confirmed" {% if reservation.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                <option value="cancelled" {% if reservation.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                <option value="completed" {% if reservation.status == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="admin-stats">
+        <div class="stat-card">
+            <h3>Today's Reservations</h3>
+            <p>{{ today_count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Pending</h3>
+            <p>{{ pending_count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Confirmed</h3>
+            <p>{{ confirmed_count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total</h3>
+            <p>{{ total_count }}</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status change handler
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const reservationId = this.getAttribute('data-id');
+                const newStatus = this.value;
+                
+                fetch(`/update-reservation-status/${reservationId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the row styling
+                        const row = this.closest('tr');
+                        row.setAttribute('data-status', data.new_status);
+                        row.querySelector('.status-badge').className = `status-badge ${data.new_status}`;
+                        row.querySelector('.status-badge').textContent = data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1);
+                        
+                        // Show success message
+                        alert('Status updated successfully');
+                    } else {
+                        alert('Error updating status');
+                        this.value = this.getAttribute('data-original-status');
+                    }
+                })
+                .catch(error => {
+                    alert('Error updating status');
+                    this.value = this.getAttribute('data-original-status');
+                });
+            });
+        });
+        
+        // Filter by date
+        document.getElementById('filter-date').addEventListener('change', function() {
+            const date = this.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const rowDate = row.querySelector('td:nth-child(3)').textContent.split('\n')[0];
+                const formattedRowDate = new Date(rowDate).toISOString().split('T')[0];
+                
+                if (!date || formattedRowDate === date) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Reset date filter
+        document.getElementById('reset-date').addEventListener('click', function() {
+            document.getElementById('filter-date').value = '';
+            document.querySelectorAll('tbody tr').forEach(row => {
+                row.style.display = '';
+            });
+        });
+        
+        // Filter by status
+        document.getElementById('filter-status').addEventListener('change', function() {
+            const status = this.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (status === 'all' || row.getAttribute('data-status') === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Search functionality
+        document.getElementById('search-reservations').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const customerName = row.querySelector('td:nth-child(2) strong').textContent.toLowerCase();
+                const phone = row.querySelector('td:nth-child(2) span').textContent.toLowerCase();
+                
+                if (customerName.includes(searchTerm) || phone.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,46 @@
+<footer class="footer" style="background-image: url('{{ url_for('static', filename='images/footer-bg.jpg') }}')">
+    <div class="footer-content">
+        <div class="footer-section about">
+            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Gourmet Haven" class="footer-logo">
+            <p>Experience culinary excellence at Gourmet Haven. We source the freshest ingredients to create memorable dining experiences.</p>
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+            </div>
+        </div>
+        
+        <div class="footer-section links">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="{{ url_for('views.home') }}">Home</a></li>
+                <li><a href="{{ url_for('views.menu') }}">Menu</a></li>
+                <li><a href="{{ url_for('views.reservations') }}">Reservations</a></li>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('views.my_reservations') }}">My Reservations</a></li>
+                    <li><a href="{{ url_for('views.my_orders') }}">My Orders</a></li>
+                {% endif %}
+            </ul>
+        </div>
+        
+        <div class="footer-section contact">
+            <h3>Contact Us</h3>
+            <p><i class="fas fa-map-marker-alt"></i> Esith, Azbane</p>
+            <p><i class="fas fa-phone"></i> (+212) 760-058308</p>
+            <p><i class="fas fa-envelope"></i> ismailjirari5@gmail.com</p>
+        </div>
+        
+        <div class="footer-section newsletter">
+            <h3>Newsletter</h3>
+            <p>Subscribe to get updates on special offers</p>
+            <form class="newsletter-form">
+                <input type="email" placeholder="Your Email">
+                <button type="submit"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="footer-bottom">
+        <p>&copy; 2025 Gourmet Haven. All Rights Reserved.</p>
+    </div>
+</footer>

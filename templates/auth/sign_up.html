@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - Sign Up{% endblock %}
+
+{% block content %}
+<section class="auth-section" style="background-image: url('{{ url_for('static', filename='images/service-3.jpg') }}')">
+    <div class="auth-container">
+        <div class="auth-form">
+            <div class="form-header">
+                <img src="{{ url_for('static', filename='images/logon.svg') }}" alt="Gourmet Haven">
+                <h2>Create Account</h2>
+                <p>Join our culinary journey</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('auth.sign_up') }}">
+                <!-- CSRF protection will be handled automatically by Flask-WTF -->
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName" required>
+                        <i class="fas fa-user"></i>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName" required>
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                    <i class="fas fa-envelope"></i>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" required>
+                    <i class="fas fa-phone"></i>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password1">Password</label>
+                    <input type="password" id="password1" name="password1" required>
+                    <i class="fas fa-lock"></i>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password2">Confirm Password</label>
+                    <input type="password" id="password2" name="password2" required>
+                    <i class="fas fa-lock"></i>
+                </div>
+                
+                <div class="form-terms">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+                </div>
+                
+                <button type="submit" class="auth-btn">Sign Up</button>
+                
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
+                </div>
+            </form>
+        </div>
+        
+        <div class="auth-image">
+            <img src="{{ url_for('static', filename='images/hero-slider-2.jpg') }}" alt="Restaurant Food">
+        </div>
+    </div>
+</section>
+{% endblock %}

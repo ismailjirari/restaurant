@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Gourmet Haven - Admin Orders{% endblock %}
+
+{% block content %}
+<section class="admin-header">
+    <h1>Order Management</h1>
+    <p>View and manage all customer orders</p>
+</section>
+
+<section class="admin-orders">
+    <div class="admin-filters">
+        <div class="date-filter">
+            <label for="filter-date">Filter by Date:</label>
+            <input type="date" id="filter-date">
+            <button id="reset-date">Reset</button>
+        </div>
+        
+        <div class="status-filter">
+            <label>Filter by Status:</label>
+            <select id="filter-status">
+                <option value="all">All</option>
+                <option value="pending">Pending</option>
+                <option value="preparing">Preparing</option>
+                <option value="ready">Ready</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+        </div>
+        
+        <div class="search-filter">
+            <input type="text" id="search-orders" placeholder="Search by customer name...">
+            <button><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+    
+    <div class="orders-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr data-status="{{ order.status }}">
+                    <td>{{ order.id }}</td>
+                    <td>
+                        <div class="customer-info">
+                            <strong>{{ order.customer.first_name }} {{ order.customer.last_name }}</strong>
+                            <span>{{ order.customer.email }}</span>
+                        </div>
+                    </td>
+                    <td>{{ order.order_date.strftime('%b %d, %Y %I:%M %p') }}</td>
+                    <td>{{ order.items|length }} item{{ 's' if order.items|length > 1 else '' }}</td>
+                    <td>${{ "%.2f"|format(order.total_amount) }}</td>
+                    <td>
+                        <span class="status-badge {{ order.status }}">{{ order.status|title }}</span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <select class="status-select" data-id="{{ order.id }}">
+                                <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Preparing</option>
+                                <option value="ready" {% if order.status == 'ready' %}selected{% endif %}>Ready</option>
+                                <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                            </select>
+                            <button class="view-details" data-id="{{ order.id }}">Details</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="admin-stats">
+        <div class="stat-card">
+            <h3>Today's Orders</h3>
+            <p>{{ orders|selectattr('order_date', 'date_equalto', today)|list|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Pending</h3>
+            <p>{{ orders|selectattr('status', 'equalto', 'pending')|list|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Preparing</h3>
+            <p>{{ orders|selectattr('status', 'equalto', 'preparing')|list|length }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Revenue</h3>
+            <p>${{ "%.2f"|format(orders|sum(attribute='total_amount')) }}</p>
+        </div>
+    </div>
+</section>
+
+<div class="order-modal" id="order-modal">
+    <div class="modal-content">
+        <button class="close-modal">&times;</button>
+        <div class="modal-body">
+            <!-- Order details will be loaded here via AJAX -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status change handler
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const orderId = this.getAttribute('data-id');
+                const newStatus = this.value;
+                
+                fetch(`/update-order-status/${orderId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast(`Order status updated to ${data.new_status}`);
+                        // Update the row styling
+                        const row = this.closest('tr');
+                        row.setAttribute('data-status', data.new_status);
+                        row.querySelector('.status-badge').className = `status-badge ${data.new_status}`;
+                        row.querySelector('.status-badge').textContent = data.new_status.charAt(0).toUpperCase() + data.new_status.slice(1);
+                    } else {
+                        showToast('Error updating status', 'error');
+                        this.value = this.getAttribute('data-original-status');
+                    }
+                })
+                .catch(error => {
+                    showToast('Error updating status', 'error');
+                    this.value = this.getAttribute('data-original-status');
+                });
+            });
+        });
+        
+        // View details button
+        document.querySelectorAll('.view-details').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-id');
+                fetch(`/order-details/${orderId}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.querySelector('.modal-body').innerHTML = html;
+                        document.getElementById('order-modal').style.display = 'flex';
+                    });
+            });
+        });
+        
+        // Close modal
+        document.querySelector('.close-modal').addEventListener('click', function() {
+            document.getElementById('order-modal').style.display = 'none';
+        });
+        
+        // Filter by date
+        document.getElementById('filter-date').addEventListener('change', function() {
+            const date = this.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const rowDate = row.querySelector('td:nth-child(3)').textContent.split(' ')[0];
+                const formattedRowDate = new Date(rowDate).toISOString().split('T')[0];
+                
+                if (!date || formattedRowDate === date) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Reset date filter
+        document.getElementById('reset-date').addEventListener('click', function() {
+            document.getElementById('filter-date').value = '';
+            document.querySelectorAll('tbody tr').forEach(row => {
+                row.style.display = '';
+            });
+        });
+        
+        // Filter by status
+        document.getElementById('filter-status').addEventListener('change', function() {
+            const status = this.value;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                if (status === 'all' || row.getAttribute('data-status') === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Search functionality
+        document.getElementById('search-orders').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const customerName = row.querySelector('td:nth-child(2) strong').textContent.toLowerCase();
+                
+                if (customerName.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
